@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, staging]
+  push:
+    branches: [staging]
+
+jobs:
+  build:
+    name: Build & lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check (if TS added later)
+        run: echo "No TS yet — skip"
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL_STAGING }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY_STAGING }}
+          VITE_INSIGHT_FORMAT: three-layer
+          VITE_FREE_COLLEAGUES: "5"
+          VITE_FREE_INTERACTIONS: "50"
+          VITE_FREE_INSIGHTS: "5"
+          VITE_FREE_HISTORY_DAYS: "7"
+          VITE_HITL_THRESHOLD: "0.7"
+          VITE_SONNET_PROMPT_VERSION: v1_empowering
