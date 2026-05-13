@@ -60,20 +60,20 @@ export default function EveningReflection({ onComplete }) {
   }
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-md mx-auto w-full">
       <div className="card space-y-6">
         <div>
-          <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Evening reflection</p>
+          <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wide mb-2">Evening reflection</p>
           <h1>How did today go?</h1>
         </div>
 
         {todayInteractions.length > 0 && (
           <div>
             <p className="text-sm font-medium text-gray-700 mb-2">Interactions you logged today:</p>
-            <ul className="space-y-1">
+            <ul className="space-y-1.5">
               {todayInteractions.map(i => (
                 <li key={i.id} className="flex items-center gap-2 text-sm text-gray-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-blue-400 flex-shrink-0" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 flex-shrink-0" />
                   {i.colleagues?.name || 'General'} —{' '}
                   <span className="text-gray-400 capitalize">{i.interaction_type.replace('_', ' ')}</span>
                 </li>
@@ -82,19 +82,21 @@ export default function EveningReflection({ onComplete }) {
           </div>
         )}
 
-        {/* Outcome tags */}
         <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">How would you tag today? <span className="text-gray-400 font-normal">(optional)</span></p>
+          <p className="text-sm font-medium text-gray-700 mb-2">
+            How would you tag today?{' '}
+            <span className="text-gray-400 font-normal">(optional)</span>
+          </p>
           <div className="flex flex-wrap gap-2">
             {OUTCOME_TAGS.map(tag => (
               <button
                 key={tag.value}
                 type="button"
                 title={tag.description}
-                className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                   selectedTags.includes(tag.value)
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400 hover:text-indigo-600'
                 }`}
                 onClick={() => toggleTag(tag.value)}
                 aria-pressed={selectedTags.includes(tag.value)}
@@ -122,22 +124,22 @@ export default function EveningReflection({ onComplete }) {
               <button
                 key={m.value}
                 type="button"
-                className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-lg border text-sm transition-colors ${
+                className={`flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border text-sm transition-colors ${
                   mood === m.value
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                    : 'border-gray-200 text-gray-600 hover:border-indigo-200 hover:bg-indigo-50'
                 }`}
                 onClick={() => setMood(prev => prev === m.value ? null : m.value)}
                 aria-pressed={mood === m.value}
               >
                 <span className="text-lg" aria-hidden>{m.emoji}</span>
-                <span>{m.label}</span>
+                <span className="text-xs font-medium">{m.label}</span>
               </button>
             ))}
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 pt-2">
           <button className="btn-ghost flex-1" onClick={() => { if (onComplete) onComplete(); else navigate('/dashboard') }}>
             Skip
           </button>

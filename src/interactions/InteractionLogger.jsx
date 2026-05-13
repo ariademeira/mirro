@@ -57,12 +57,17 @@ export default function InteractionLogger() {
     <>
       {gateReason && <FreemiumGate reason={gateReason} onDismiss={() => setGateReason(null)} />}
 
-      <div className="max-w-lg mx-auto space-y-6">
-        <h1>Log interaction</h1>
+      <div className="max-w-xl mx-auto space-y-6">
+        <div>
+          <h1>Log interaction</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Paste a conversation, email, meeting notes, or observation.
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="card space-y-4">
+        <form onSubmit={handleSubmit} className="card space-y-5">
           <div>
-            <label htmlFor="colleague" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="colleague" className="block text-sm font-medium text-gray-700 mb-1.5">
               Colleague <span className="text-gray-400 font-normal">(optional)</span>
             </label>
             <select id="colleague" className="input" value={colleagueId} onChange={e => setColleagueId(e.target.value)}>
@@ -74,16 +79,16 @@ export default function InteractionLogger() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Type</label>
             <div className="flex flex-wrap gap-2">
               {INTERACTION_TYPES.map(t => (
                 <button
                   key={t.value}
                   type="button"
-                  className={`px-3 py-1 rounded text-sm border transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
                     interactionType === t.value
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400 hover:text-indigo-600'
                   }`}
                   onClick={() => setType(t.value)}
                   aria-pressed={interactionType === t.value}

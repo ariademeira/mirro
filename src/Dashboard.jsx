@@ -53,9 +53,11 @@ export default function Dashboard() {
       </div>
 
       {showEveningBanner && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800 flex items-center justify-between gap-3">
+        <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-5 py-4 text-sm text-indigo-800 flex items-center justify-between gap-3 animate-fade-in">
           <span>Time for your evening reflection — how did today go?</span>
-          <button className="btn-primary text-xs py-1" onClick={() => setShowEvening(true)}>Start</button>
+          <button className="btn-primary text-xs py-1.5 flex-shrink-0" onClick={() => setShowEvening(true)}>
+            Start
+          </button>
         </div>
       )}
 

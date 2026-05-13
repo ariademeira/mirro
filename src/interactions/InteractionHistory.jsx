@@ -10,7 +10,6 @@ export default function InteractionHistory({ colleagueId: propColleagueId, limit
   const [filterColleagueId, setFilterColleagueId] = useState(propColleagueId || '')
 
   useEffect(() => {
-    // Only load colleague dropdown when used as standalone page (no propColleagueId)
     if (!propColleagueId) {
       getColleagues().then(setColleagues).catch(console.error)
     }
@@ -30,26 +29,27 @@ export default function InteractionHistory({ colleagueId: propColleagueId, limit
     setInteractions(prev => prev.filter(i => i.id !== id))
   }
 
-  // Group interactions by date
   const grouped = groupByDate(interactions)
 
   if (loading) return (
-    <div className="animate-pulse space-y-2" aria-label="Loading interactions">
-      {[1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-100 rounded-lg" />)}
+    <div className="animate-pulse space-y-3" aria-label="Loading interactions">
+      {[1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-100 rounded-xl" />)}
     </div>
   )
 
   return (
-    <div className="space-y-4">
-      {/* Header + filter */}
+    <div className="space-y-6">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h2>Interaction history <span className="text-gray-400 font-normal text-sm">(last 30 days)</span></h2>
-        <Link to="/interactions/new" className="btn-primary text-sm">+ Log</Link>
+        <div>
+          <h1>Interactions</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Last 30 days</p>
+        </div>
+        <Link to="/interactions/new" className="btn-primary">+ Log</Link>
       </div>
 
       {!propColleagueId && colleagues.length > 0 && (
         <select
-          className="input py-1.5 text-sm w-full sm:w-48"
+          className="input py-2 w-full sm:w-52"
           value={filterColleagueId}
           onChange={e => setFilterColleagueId(e.target.value)}
           aria-label="Filter by colleague"
@@ -62,27 +62,31 @@ export default function InteractionHistory({ colleagueId: propColleagueId, limit
       )}
 
       {interactions.length === 0 ? (
-        <div className="card text-center py-6 space-y-2">
-          <p className="text-gray-500 text-sm">
-            {filterColleagueId ? 'No interactions logged for this colleague in the last 30 days.' : 'No interactions logged yet.'}
+        <div className="empty-state">
+          <p className="text-3xl mb-4">📝</p>
+          <h3 className="mb-2">No interactions yet</h3>
+          <p className="text-sm text-gray-500 mb-6">
+            {filterColleagueId
+              ? 'No interactions logged for this colleague in the last 30 days.'
+              : 'Start logging your conversations to see them here.'}
           </p>
-          <Link to="/interactions/new" className="btn-secondary text-sm inline-flex">Log your first</Link>
+          <Link to="/interactions/new" className="btn-primary">Log your first</Link>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {grouped.map(({ label, items }) => (
             <div key={label}>
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">{label}</p>
-              <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{label}</p>
+              <div className="space-y-3">
                 {items.map(i => (
-                  <div key={i.id} className="card group">
+                  <div key={i.id} className="card group py-4">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 text-xs text-gray-400 mb-1 flex-wrap">
-                          <span className="capitalize">{i.interaction_type.replace(/_/g, ' ')}</span>
+                        <div className="flex items-center gap-2 text-xs text-gray-400 mb-1.5 flex-wrap">
+                          <span className="capitalize font-medium">{i.interaction_type.replace(/_/g, ' ')}</span>
                           {i.colleagues?.name && <span>· {i.colleagues.name}</span>}
                           {i.mood_signal && (
-                            <span className="capitalize text-gray-500">· {i.mood_signal}</span>
+                            <span className="capitalize">· {i.mood_signal}</span>
                           )}
                         </div>
                         <p className="text-sm text-gray-700 line-clamp-2">{i.raw_content}</p>

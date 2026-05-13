@@ -39,7 +39,6 @@ export default function ColleagueList() {
     } else if (sort === 'interactions') {
       list = [...list].sort((a, b) => (b.interaction_count || 0) - (a.interaction_count || 0))
     }
-    // 'recent' is the default order from the API
     return list
   }, [colleagues, search, sort])
 
@@ -47,27 +46,26 @@ export default function ColleagueList() {
   if (error)   return <p className="text-sm text-red-600" role="alert">{error}</p>
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2>
-          Colleagues{' '}
-          <span className="text-gray-400 font-normal text-sm">
-            ({colleagues.length}/{freeTierConfig.maxColleagues})
-          </span>
-        </h2>
-        <Link to="/colleagues/new" className="btn-primary text-sm">+ Add</Link>
+        <div>
+          <h1>Colleagues</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {colleagues.length} / {freeTierConfig.maxColleagues} colleagues
+          </p>
+        </div>
+        <Link to="/colleagues/new" className="btn-primary">+ Add colleague</Link>
       </div>
 
-      {/* Search + sort controls */}
       {colleagues.length > 0 && (
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
             </svg>
             <input
               type="search"
-              className="input pl-8 py-1.5 text-sm"
+              className="input pl-9 py-2"
               placeholder="Search by name, role…"
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -75,7 +73,7 @@ export default function ColleagueList() {
             />
           </div>
           <select
-            className="input py-1.5 text-sm w-40"
+            className="input py-2 w-40"
             value={sort}
             onChange={e => setSort(e.target.value)}
             aria-label="Sort colleagues"
@@ -88,17 +86,19 @@ export default function ColleagueList() {
       )}
 
       {filtered.length === 0 && colleagues.length > 0 ? (
-        <div className="card text-center py-6">
+        <div className="empty-state">
           <p className="text-gray-500 text-sm">No colleagues match "{search}".</p>
-          <button className="btn-ghost text-sm mt-2" onClick={() => setSearch('')}>Clear search</button>
+          <button className="btn-ghost text-sm mt-3" onClick={() => setSearch('')}>Clear search</button>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="card text-center py-8 space-y-2">
-          <p className="text-gray-500">No colleagues yet.</p>
-          <Link to="/colleagues/new" className="btn-secondary text-sm inline-flex">Add your first colleague</Link>
+        <div className="empty-state">
+          <p className="text-3xl mb-4">🤝</p>
+          <h3 className="mb-2">No colleagues yet</h3>
+          <p className="text-sm text-gray-500 mb-6">Start mapping your professional relationships.</p>
+          <Link to="/colleagues/new" className="btn-primary">Add your first colleague</Link>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map(c => <ColleagueCard key={c.id} colleague={c} />)}
         </div>
       )}
@@ -115,15 +115,15 @@ export default function ColleagueList() {
 
 function LoadingSkeleton() {
   return (
-    <div className="space-y-4" aria-label="Loading colleagues">
+    <div className="space-y-6" aria-label="Loading colleagues">
       <div className="flex items-center justify-between">
-        <div className="h-5 bg-gray-200 rounded w-32 animate-pulse" />
-        <div className="h-8 bg-gray-200 rounded w-20 animate-pulse" />
+        <div className="h-8 bg-gray-200 rounded-lg w-32 animate-pulse" />
+        <div className="h-9 bg-gray-200 rounded-lg w-28 animate-pulse" />
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3].map(i => (
           <div key={i} className="card animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-2/3 mb-2" />
+            <div className="h-4 bg-gray-200 rounded w-2/3 mb-3" />
             <div className="h-3 bg-gray-100 rounded w-1/2" />
           </div>
         ))}

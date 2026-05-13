@@ -23,10 +23,9 @@ export default function MorningPrompt({ onComplete }) {
   const [selectedIds, setSelectedIds] = useState([])
   const [content, setContent] = useState('')
   const [mood, setMood] = useState(null)
-  const [step, setStep] = useState(1) // 1: who | 2: what
+  const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
 
-  // Pick a random prompt once per page load (stored in state so it stays stable)
   const [todayPrompt] = useState(() => ROTATING_PROMPTS[Math.floor(Math.random() * ROTATING_PROMPTS.length)])
 
   useEffect(() => {
@@ -59,17 +58,16 @@ export default function MorningPrompt({ onComplete }) {
   const greeting = getGreeting()
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-md mx-auto w-full">
       <div className="card space-y-6">
         {step === 1 && (
           <>
             <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Morning check-in</p>
+              <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wide mb-2">Morning check-in</p>
               <h1>{greeting}</h1>
               <p className="text-gray-600 text-sm mt-2">{todayPrompt}</p>
             </div>
 
-            {/* Mood selector */}
             <div>
               <p className="text-sm font-medium text-gray-700 mb-2">How are you starting the day?</p>
               <div className="flex gap-2">
@@ -77,16 +75,16 @@ export default function MorningPrompt({ onComplete }) {
                   <button
                     key={m.value}
                     type="button"
-                    className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-lg border text-sm transition-colors ${
+                    className={`flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border text-sm transition-colors ${
                       mood === m.value
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                        : 'border-gray-200 text-gray-600 hover:border-indigo-200 hover:bg-indigo-50'
                     }`}
                     onClick={() => setMood(prev => prev === m.value ? null : m.value)}
                     aria-pressed={mood === m.value}
                   >
                     <span className="text-xl" aria-hidden>{m.emoji}</span>
-                    <span className="text-xs">{m.label}</span>
+                    <span className="text-xs font-medium">{m.label}</span>
                   </button>
                 ))}
               </div>
@@ -99,16 +97,16 @@ export default function MorningPrompt({ onComplete }) {
                   <button
                     key={c.id}
                     type="button"
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-colors ${
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-colors ${
                       selectedIds.includes(c.id)
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-200 hover:border-indigo-200'
                     }`}
                     onClick={() => toggleColleague(c.id)}
                     aria-pressed={selectedIds.includes(c.id)}
                   >
                     <span className={`h-4 w-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                      selectedIds.includes(c.id) ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                      selectedIds.includes(c.id) ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300'
                     }`}>
                       {selectedIds.includes(c.id) && (
                         <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -116,7 +114,7 @@ export default function MorningPrompt({ onComplete }) {
                         </svg>
                       )}
                     </span>
-                    <span className="text-sm">{c.name}</span>
+                    <span className="text-sm font-medium">{c.name}</span>
                     {c.last_interaction && (
                       <span className="ml-auto text-xs text-gray-400">
                         {new Date(c.last_interaction).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -127,7 +125,7 @@ export default function MorningPrompt({ onComplete }) {
               </div>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 pt-2">
               <button className="btn-ghost flex-1" onClick={() => { if (onComplete) onComplete(); else navigate('/dashboard') }}>
                 Skip
               </button>
@@ -141,7 +139,7 @@ export default function MorningPrompt({ onComplete }) {
         {step === 2 && (
           <>
             <div>
-              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Morning check-in</p>
+              <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wide mb-2">Morning check-in</p>
               <h2>What would help you navigate this better?</h2>
             </div>
 
