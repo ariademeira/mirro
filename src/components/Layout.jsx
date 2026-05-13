@@ -4,9 +4,12 @@ import { useAuth } from '../hooks/useAuth'
 const NAV = [
   { to: '/dashboard',      label: 'Dashboard',    icon: '⊞' },
   { to: '/colleagues',     label: 'Colleagues',   icon: '👥' },
+  { to: '/interactions',   label: 'Interactions', icon: '📝' },
   { to: '/insights',       label: 'Insights',     icon: '💡' },
   { to: '/settings',       label: 'Settings',     icon: '⚙️' },
 ]
+
+const MOBILE_NAV = NAV.filter(n => n.to !== '/insights')
 
 export default function Layout({ children }) {
   const { pathname } = useLocation()
@@ -45,7 +48,7 @@ export default function Layout({ children }) {
       {/* Mobile bottom nav */}
       <nav className="sm:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-40" aria-label="Mobile navigation">
         <div className="flex">
-          {NAV.map(n => (
+          {MOBILE_NAV.map(n => (
             <Link
               key={n.to}
               to={n.to}

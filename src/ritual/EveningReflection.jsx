@@ -9,11 +9,19 @@ const MOOD_OPTIONS = [
   { value: 'drained',   label: 'Drained',   emoji: '🪫' },
 ]
 
+const OUTCOME_TAGS = [
+  { value: 'win',        label: 'Win',        description: 'Something went well' },
+  { value: 'learning',   label: 'Learning',   description: 'A useful insight' },
+  { value: 'unresolved', label: 'Unresolved', description: 'Still needs attention' },
+  { value: 'growth',     label: 'Growth',     description: 'A stretch moment' },
+]
+
 export default function EveningReflection({ onComplete }) {
   const navigate = useNavigate()
   const [todayInteractions, setTodayInteractions] = useState([])
   const [outcomes, setOutcomes] = useState('')
   const [mood, setMood] = useState(null)
+  const [selectedTags, setSelectedTags] = useState([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -24,12 +32,21 @@ export default function EveningReflection({ onComplete }) {
     }).catch(console.error)
   }, [])
 
+  function toggleTag(value) {
+    setSelectedTags(prev =>
+      prev.includes(value) ? prev.filter(t => t !== value) : [...prev, value]
+    )
+  }
+
   async function handleSubmit() {
     setLoading(true)
     try {
+      const tagSuffix = selectedTags.length > 0
+        ? `\n\nOutcomes: ${selectedTags.join(', ')}`
+        : ''
       await logInteraction({
         interactionType: 'evening_reflection',
-        rawContent: outcomes || 'Evening reflection.',
+        rawContent: (outcomes || 'Evening reflection.') + tagSuffix,
         source: 'paste',
         moodSignal: mood,
       })
@@ -52,7 +69,7 @@ export default function EveningReflection({ onComplete }) {
 
         {todayInteractions.length > 0 && (
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Interactions you logged:</p>
+            <p className="text-sm font-medium text-gray-700 mb-2">Interactions you logged today:</p>
             <ul className="space-y-1">
               {todayInteractions.map(i => (
                 <li key={i.id} className="flex items-center gap-2 text-sm text-gray-600">
@@ -65,6 +82,29 @@ export default function EveningReflection({ onComplete }) {
           </div>
         )}
 
+        {/* Outcome tags */}
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-2">How would you tag today? <span className="text-gray-400 font-normal">(optional)</span></p>
+          <div className="flex flex-wrap gap-2">
+            {OUTCOME_TAGS.map(tag => (
+              <button
+                key={tag.value}
+                type="button"
+                title={tag.description}
+                className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                  selectedTags.includes(tag.value)
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
+                }`}
+                onClick={() => toggleTag(tag.value)}
+                aria-pressed={selectedTags.includes(tag.value)}
+              >
+                {tag.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <PasteInput
           value={outcomes}
           onChange={setOutcomes}
@@ -76,7 +116,7 @@ export default function EveningReflection({ onComplete }) {
         />
 
         <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">How are you feeling?</p>
+          <p className="text-sm font-medium text-gray-700 mb-2">How are you feeling now?</p>
           <div className="flex gap-2">
             {MOOD_OPTIONS.map(m => (
               <button
@@ -90,7 +130,7 @@ export default function EveningReflection({ onComplete }) {
                 onClick={() => setMood(prev => prev === m.value ? null : m.value)}
                 aria-pressed={mood === m.value}
               >
-                <span className="text-lg">{m.emoji}</span>
+                <span className="text-lg" aria-hidden>{m.emoji}</span>
                 <span>{m.label}</span>
               </button>
             ))}

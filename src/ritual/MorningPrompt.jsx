@@ -4,13 +4,30 @@ import { getColleagues } from '../lib/api/colleagues'
 import { logInteraction } from '../lib/api/interactions'
 import PasteInput from '../components/PasteInput'
 
+const ROTATING_PROMPTS = [
+  "Who are you thinking about or concerned about today?",
+  "Who do you need to align with this week?",
+  "Where do you expect friction today?",
+  "Who's on your radar and why?",
+]
+
+const MOODS = [
+  { value: 'good',    label: 'Good',    emoji: '🙂' },
+  { value: 'neutral', label: 'Neutral', emoji: '😐' },
+  { value: 'tough',   label: 'Tough',   emoji: '😟' },
+]
+
 export default function MorningPrompt({ onComplete }) {
   const navigate = useNavigate()
   const [colleagues, setColleagues] = useState([])
   const [selectedIds, setSelectedIds] = useState([])
   const [content, setContent] = useState('')
+  const [mood, setMood] = useState(null)
   const [step, setStep] = useState(1) // 1: who | 2: what
   const [loading, setLoading] = useState(false)
+
+  // Pick a random prompt once per page load (stored in state so it stays stable)
+  const [todayPrompt] = useState(() => ROTATING_PROMPTS[Math.floor(Math.random() * ROTATING_PROMPTS.length)])
 
   useEffect(() => {
     getColleagues().then(recent => setColleagues(recent.slice(0, 5))).catch(console.error)
@@ -28,6 +45,7 @@ export default function MorningPrompt({ onComplete }) {
         interactionType: 'morning_reflection',
         rawContent: content || `Morning check-in. Thinking about: ${selectedIds.map(id => colleagues.find(c => c.id === id)?.name).filter(Boolean).join(', ') || 'general reflections'}.`,
         source: 'paste',
+        moodSignal: mood,
       })
       if (onComplete) onComplete()
       else navigate('/dashboard')
@@ -48,11 +66,35 @@ export default function MorningPrompt({ onComplete }) {
             <div>
               <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Morning check-in</p>
               <h1>{greeting}</h1>
-              <p className="text-gray-500 text-sm mt-1">Who's on your radar today?</p>
+              <p className="text-gray-600 text-sm mt-2">{todayPrompt}</p>
+            </div>
+
+            {/* Mood selector */}
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">How are you starting the day?</p>
+              <div className="flex gap-2">
+                {MOODS.map(m => (
+                  <button
+                    key={m.value}
+                    type="button"
+                    className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-lg border text-sm transition-colors ${
+                      mood === m.value
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                    onClick={() => setMood(prev => prev === m.value ? null : m.value)}
+                    aria-pressed={mood === m.value}
+                  >
+                    <span className="text-xl" aria-hidden>{m.emoji}</span>
+                    <span className="text-xs">{m.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {colleagues.length > 0 && (
               <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700">Select anyone on your mind:</p>
                 {colleagues.map(c => (
                   <button
                     key={c.id}
