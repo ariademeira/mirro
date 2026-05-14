@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from './hooks/useAuth'
+import { createPortal } from 'react-dom'
+import { Moon } from 'lucide-react'
 import MorningPrompt from './ritual/MorningPrompt'
 import EveningReflection from './ritual/EveningReflection'
 import DashboardHome from './dashboard/DashboardHome'
 
 export default function Dashboard() {
-  const { user } = useAuth()
   const [showMorning, setShowMorning] = useState(false)
   const [showEvening, setShowEvening] = useState(false)
 
   useEffect(() => {
     const lastMorning = localStorage.getItem('mirro_morning_done')
-    const todayStr = new Date().toDateString()
-    if (lastMorning !== todayStr) {
+    if (lastMorning !== new Date().toDateString()) {
       setShowMorning(true)
     }
   }, [])
@@ -25,43 +24,34 @@ export default function Dashboard() {
   const hour = new Date().getHours()
   const showEveningBanner = hour >= 16 && !showMorning && !showEvening
 
-  if (showMorning) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-        <MorningPrompt onComplete={completeMorning} />
-      </div>
-    )
-  }
-
-  if (showEvening) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-        <EveningReflection onComplete={() => setShowEvening(false)} />
-      </div>
-    )
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1>Dashboard</h1>
-        {showEveningBanner && (
-          <button className="btn-secondary text-sm" onClick={() => setShowEvening(true)}>
-            Evening reflection
-          </button>
-        )}
-      </div>
-
-      {showEveningBanner && (
-        <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-5 py-4 text-sm text-indigo-800 flex items-center justify-between gap-3 animate-fade-in">
-          <span>Time for your evening reflection — how did today go?</span>
-          <button className="btn-primary text-xs py-1.5 flex-shrink-0" onClick={() => setShowEvening(true)}>
-            Start
-          </button>
-        </div>
+    <>
+      {/* Ritual overlays rendered outside Layout via portal */}
+      {showMorning && createPortal(
+        <MorningPrompt onComplete={completeMorning} />,
+        document.body
+      )}
+      {showEvening && createPortal(
+        <EveningReflection onComplete={() => setShowEvening(false)} />,
+        document.body
       )}
 
-      <DashboardHome />
-    </div>
+      <div className="space-y-6">
+        {/* Evening banner */}
+        {showEveningBanner && (
+          <div className="flex items-center justify-between gap-3 bg-indigo-50 border border-indigo-200 rounded-lg px-5 py-4 animate-fadeIn">
+            <div className="flex items-center gap-3">
+              <Moon size={16} className="text-indigo-500 shrink-0" strokeWidth={1.75} />
+              <p className="text-body-sm text-indigo-800">Time for your evening reflection — how did today go?</p>
+            </div>
+            <button className="btn-primary shrink-0 text-caption h-btn-sm px-3 rounded-md" onClick={() => setShowEvening(true)}>
+              Start
+            </button>
+          </div>
+        )}
+
+        <DashboardHome />
+      </div>
+    </>
   )
 }

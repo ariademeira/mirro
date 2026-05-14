@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { Button, Input } from '../components/ui'
 
 export default function LoginFlow() {
   const { signIn } = useAuth()
@@ -20,7 +21,7 @@ export default function LoginFlow() {
     try {
       await signIn(email, password)
       navigate(from, { replace: true })
-    } catch (err) {
+    } catch {
       setError('Incorrect email or password. Please try again.')
     } finally {
       setLoading(false)
@@ -28,53 +29,55 @@ export default function LoginFlow() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="card max-w-md w-full space-y-6">
-        <div>
-          <h1 className="mb-1">Welcome back</h1>
-          <p className="text-gray-500 text-sm">Sign in to your Mirro account.</p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="w-full max-w-sm">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <span className="font-semibold text-slate-900" style={{ fontSize: 24, letterSpacing: '-0.03em' }}>mirro</span>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4" noValidate>
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-8 space-y-5">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
+            <h1 className="text-h2 text-slate-900 mb-1">Welcome back</h1>
+            <p className="text-body-sm text-slate-500">Sign in to your Mirro account.</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4" noValidate>
+            <Input
               id="email"
               type="email"
+              label="Email"
               autoComplete="email"
               required
-              className="input"
               value={email}
               onChange={e => setEmail(e.target.value)}
+              placeholder="you@example.com"
               aria-describedby={error ? 'login-error' : undefined}
             />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
+            <Input
               id="password"
               type="password"
+              label="Password"
               autoComplete="current-password"
               required
-              className="input"
               value={password}
               onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
             />
-          </div>
 
-          {error && (
-            <p id="login-error" className="text-sm text-red-600" role="alert">{error}</p>
-          )}
+            {error && (
+              <p id="login-error" className="text-caption text-danger-600" role="alert">{error}</p>
+            )}
 
-          <button type="submit" className="btn-primary w-full" disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
+            <Button type="submit" loading={loading} className="w-full justify-center">
+              Sign in
+            </Button>
+          </form>
+        </div>
 
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-body-sm text-slate-500 mt-5">
           No account yet?{' '}
-          <Link to="/signup" className="text-blue-600 hover:underline">Create one</Link>
+          <Link to="/signup" className="text-indigo-600 hover:text-indigo-700 font-medium">Create one</Link>
         </p>
       </div>
     </div>
