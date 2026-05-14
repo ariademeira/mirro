@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './hooks/useAuth'
 import AuthGuard from './auth/AuthGuard'
 import Layout from './components/Layout'
+import { ToastProvider } from './components/ui'
 
 import LoginFlow    from './auth/LoginFlow'
 import SignupFlow   from './auth/SignupFlow'
@@ -34,6 +35,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ToastProvider>
         <Routes>
           {/* Public */}
           <Route path="/login"      element={<LoginFlow />} />
@@ -62,6 +64,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   )

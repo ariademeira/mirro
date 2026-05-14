@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import { ChevronRight, Pencil, Trash2, MessageSquarePlus } from 'lucide-react'
 import { getColleague, updateColleague, deleteColleague } from '../lib/api/colleagues'
 import { getInteractions } from '../lib/api/interactions'
 import { getInsights } from '../lib/api/insights'
 import EvidenceCard from '../components/EvidenceCard'
+import { Avatar, Badge, Button, Card, Input, ConfirmDialog } from '../components/ui'
 import { framing } from '../config'
 
 export default function ColleagueDetail() {
@@ -13,14 +15,12 @@ export default function ColleagueDetail() {
   const [interactions, setInteractions] = useState([])
   const [insights, setInsights] = useState([])
   const [loading, setLoading] = useState(true)
-
   const [editing, setEditing] = useState(false)
   const [editName, setEditName] = useState('')
   const [editRole, setEditRole] = useState('')
   const [editDept, setEditDept] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
-
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
@@ -69,159 +69,146 @@ export default function ColleagueDetail() {
     try {
       await deleteColleague(id)
       navigate('/colleagues')
-    } catch (err) {
+    } catch {
       setDeleting(false)
       setConfirmDelete(false)
     }
   }
 
   if (loading) return (
-    <div className="animate-pulse space-y-4">
-      <div className="h-8 bg-gray-200 rounded-lg w-1/3" />
-      <div className="h-32 bg-gray-100 rounded-xl" />
+    <div className="space-y-4 animate-pulse">
+      <div className="h-8 bg-slate-100 rounded-lg w-1/3" />
+      <div className="h-32 bg-slate-100 rounded-lg" />
     </div>
   )
-  if (!colleague) return <p className="text-sm text-red-600">Colleague not found.</p>
+  if (!colleague) return <p className="text-body-sm text-danger-600">Colleague not found.</p>
+
+  const status = colleague.profile_status || 'emerging'
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start gap-3">
-        <Link to="/colleagues" className="btn-ghost text-sm px-2 py-1.5 mt-0.5" aria-label="Back to colleagues">
-          ←
-        </Link>
-        <div className="flex-1">
-          {editing ? (
-            <form onSubmit={handleSave} className="card space-y-4">
-              <h2>Edit colleague</h2>
-              <div>
-                <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Name <span aria-hidden>*</span>
-                </label>
-                <input id="edit-name" type="text" required className="input" value={editName} onChange={e => setEditName(e.target.value)} autoFocus />
+    <>
+      <ConfirmDialog
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={handleDelete}
+        title={`Delete ${colleague.name}?`}
+        message="This will permanently remove the colleague and all associated data. This cannot be undone."
+        confirmLabel={deleting ? 'Deleting…' : 'Yes, delete'}
+        danger
+      />
+
+      <div className="space-y-6">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-1.5 text-caption text-slate-500">
+          <Link to="/colleagues" className="hover:text-slate-700 transition-colors">Colleagues</Link>
+          <ChevronRight size={12} className="text-slate-400" />
+          <span className="text-slate-900">{colleague.name}</span>
+        </div>
+
+        {/* Header */}
+        {editing ? (
+          <Card>
+            <form onSubmit={handleSave} className="space-y-4">
+              <h2 className="text-h2 text-slate-900 mb-4">Edit colleague</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Name *" value={editName} onChange={e => setEditName(e.target.value)} required autoFocus className="col-span-2 sm:col-span-1" />
+                <Input label="Role" value={editRole} onChange={e => setEditRole(e.target.value)} className="col-span-2 sm:col-span-1" />
+                <Input label="Department" value={editDept} onChange={e => setEditDept(e.target.value)} className="col-span-2" />
               </div>
-              <div>
-                <label htmlFor="edit-role" className="block text-sm font-medium text-gray-700 mb-1.5">Role</label>
-                <input id="edit-role" type="text" className="input" value={editRole} onChange={e => setEditRole(e.target.value)} />
-              </div>
-              <div>
-                <label htmlFor="edit-dept" className="block text-sm font-medium text-gray-700 mb-1.5">Department</label>
-                <input id="edit-dept" type="text" className="input" value={editDept} onChange={e => setEditDept(e.target.value)} />
-              </div>
-              {saveError && <p className="text-sm text-red-600" role="alert">{saveError}</p>}
-              <div className="flex gap-3 pt-2">
-                <button type="button" className="btn-secondary flex-1" onClick={() => setEditing(false)}>Cancel</button>
-                <button type="submit" className="btn-primary flex-1" disabled={saving || !editName.trim()}>
-                  {saving ? 'Saving…' : 'Save changes'}
-                </button>
+              {saveError && <p className="text-caption text-danger-600" role="alert">{saveError}</p>}
+              <div className="flex gap-2 pt-2">
+                <button type="button" className="btn-secondary" onClick={() => setEditing(false)}>Cancel</button>
+                <Button type="submit" loading={saving} disabled={!editName.trim()}>Save changes</Button>
               </div>
             </form>
-          ) : (
-            <div className="flex items-start justify-between gap-3">
+          </Card>
+        ) : (
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4">
+              <Avatar name={colleague.name} size={56} />
               <div>
-                <h1>{colleague.name}</h1>
-                {(colleague.role || colleague.department) && (
-                  <p className="text-gray-500 text-sm mt-1">
-                    {[colleague.role, colleague.department].filter(Boolean).join(' · ')}
-                  </p>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <button className="btn-secondary text-sm" onClick={startEdit}>Edit</button>
-                <Link to={`/interactions/new?colleague=${id}`} className="btn-primary text-sm">+ Log</Link>
+                <h1 className="text-h1 text-slate-900">{colleague.name}</h1>
+                <div className="flex items-center gap-2.5 mt-1.5">
+                  {(colleague.role || colleague.department) && (
+                    <span className="text-body-sm text-slate-500">
+                      {[colleague.role, colleague.department].filter(Boolean).join(' · ')}
+                    </span>
+                  )}
+                  <Badge variant={status} dot>{status}</Badge>
+                </div>
               </div>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Stats */}
-      {!editing && (
-        <div className="grid grid-cols-3 gap-4">
-          <div className="card text-center">
-            <p className="text-3xl font-bold text-indigo-600">{colleague.interaction_count || 0}</p>
-            <p className="text-xs text-gray-500 mt-1 font-medium">Interactions</p>
-          </div>
-          <div className="card text-center">
-            <p className="text-3xl font-bold text-indigo-600">{insights.length}</p>
-            <p className="text-xs text-gray-500 mt-1 font-medium">Insights</p>
-          </div>
-          <div className="card text-center">
-            <p className="text-sm font-semibold text-gray-700 capitalize mt-1">
-              {colleague.profile_status || 'emerging'}
-            </p>
-            <p className="text-xs text-gray-500 mt-1 font-medium">Profile status</p>
-          </div>
-        </div>
-      )}
-
-      {/* Insights */}
-      {!editing && insights.length > 0 && (
-        <section>
-          <h2 className="mb-4">{framing.userInsights}</h2>
-          <div className="space-y-3">
-            {insights.map(i => <EvidenceCard key={i.id} insight={i} />)}
-          </div>
-        </section>
-      )}
-
-      {/* Recent interactions */}
-      {!editing && (
-        <section>
-          <h2 className="mb-4">Recent interactions</h2>
-          {interactions.length === 0 ? (
-            <div className="empty-state">
-              <p className="text-gray-500 text-sm">No interactions logged yet.</p>
-              <Link to={`/interactions/new?colleague=${id}`} className="btn-secondary text-sm inline-flex mt-4">
-                Log first interaction
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" icon={Pencil} onClick={startEdit}>Edit</Button>
+              <Button variant="danger" size="sm" icon={Trash2} onClick={() => setConfirmDelete(true)}>Delete</Button>
+              <Link to={`/interactions/new?colleague=${id}`} className="btn-primary inline-flex items-center gap-2 h-btn-sm px-3 text-caption">
+                <MessageSquarePlus size={14} strokeWidth={1.75} />
+                Log interaction
               </Link>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {interactions.slice(0, 10).map(i => (
-                <div key={i.id} className="card py-4">
-                  <div className="flex items-center justify-between text-xs text-gray-400 mb-1.5">
-                    <span className="capitalize font-medium">{i.interaction_type.replace('_', ' ')}</span>
-                    <span>{new Date(i.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                  </div>
-                  <p className="text-sm text-gray-700 line-clamp-3">{i.raw_content}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+          </div>
+        )}
 
-      {/* Delete */}
-      {!editing && (
-        <div className="pt-4 border-t border-gray-100">
-          {confirmDelete ? (
-            <div className="card border-red-200 bg-red-50 space-y-3">
-              <p className="text-sm text-red-700 font-semibold">Delete {colleague.name}?</p>
-              <p className="text-xs text-red-600">
-                This will permanently remove the colleague and all associated data. This cannot be undone.
-              </p>
-              <div className="flex gap-2">
-                <button className="btn-ghost flex-1 text-sm" onClick={() => setConfirmDelete(false)}>Cancel</button>
-                <button
-                  className="flex-1 inline-flex items-center justify-center px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                >
-                  {deleting ? 'Deleting…' : 'Yes, delete'}
-                </button>
-              </div>
+        {/* Stats row */}
+        {!editing && (
+          <div className="grid grid-cols-3 gap-4">
+            <Card className="text-center">
+              <p className="text-display-xl text-indigo-500">{colleague.interaction_count || 0}</p>
+              <p className="text-caption text-slate-500 mt-1 font-medium">Interactions</p>
+            </Card>
+            <Card className="text-center">
+              <p className="text-display-xl text-indigo-500">{insights.length}</p>
+              <p className="text-caption text-slate-500 mt-1 font-medium">Insights</p>
+            </Card>
+            <Card className="text-center">
+              <p className="text-body-sm font-semibold text-slate-700 capitalize mt-2">{status}</p>
+              <p className="text-caption text-slate-500 mt-1 font-medium">Status</p>
+            </Card>
+          </div>
+        )}
+
+        {/* Insights */}
+        {!editing && insights.length > 0 && (
+          <section>
+            <h2 className="text-h3 text-slate-900 mb-3">{framing.userInsights}</h2>
+            <div className="space-y-3">
+              {insights.map(i => <EvidenceCard key={i.id} insight={i} />)}
             </div>
-          ) : (
-            <button
-              className="btn-ghost text-sm text-red-500 hover:text-red-700 hover:bg-red-50"
-              onClick={() => setConfirmDelete(true)}
-            >
-              Delete colleague
-            </button>
-          )}
-        </div>
-      )}
-    </div>
+          </section>
+        )}
+
+        {/* Interaction history */}
+        {!editing && (
+          <section>
+            <h2 className="text-h3 text-slate-900 mb-3">Interactions</h2>
+            {interactions.length === 0 ? (
+              <div className="empty-state">
+                <p className="text-body text-slate-500">No interactions logged yet.</p>
+                <Link to={`/interactions/new?colleague=${id}`} className="btn-secondary inline-flex mt-4 text-body-sm">
+                  Log first interaction
+                </Link>
+              </div>
+            ) : (
+              <Card padding={false}>
+                <div className="divide-y divide-slate-100">
+                  {interactions.slice(0, 10).map(i => (
+                    <div key={i.id} className="px-5 py-4">
+                      <div className="flex items-center justify-between text-caption text-slate-400 mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="neutral">{i.interaction_type.replace('_', ' ')}</Badge>
+                          {i.mood_signal && <span className="capitalize text-slate-400">{i.mood_signal}</span>}
+                        </div>
+                        <span className="font-mono">{new Date(i.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                      </div>
+                      <p className="text-body-sm text-slate-700 line-clamp-3 leading-relaxed">{i.raw_content}</p>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+          </section>
+        )}
+      </div>
+    </>
   )
 }

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { MessageSquarePlus, Trash2, Clock } from 'lucide-react'
 import { getInteractions, deleteInteraction } from '../lib/api/interactions'
 import { getColleagues } from '../lib/api/colleagues'
+import { Avatar, Badge, Button, EmptyState, Card } from '../components/ui'
 
 export default function InteractionHistory({ colleagueId: propColleagueId, limit = 50 }) {
   const [interactions, setInteractions] = useState([])
@@ -31,25 +33,26 @@ export default function InteractionHistory({ colleagueId: propColleagueId, limit
 
   const grouped = groupByDate(interactions)
 
-  if (loading) return (
-    <div className="animate-pulse space-y-3" aria-label="Loading interactions">
-      {[1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-100 rounded-xl" />)}
-    </div>
-  )
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
+      {/* Header */}
+      <div className="flex items-end justify-between gap-4">
         <div>
-          <h1>Interactions</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Last 30 days</p>
+          <p className="text-micro text-slate-400 uppercase tracking-widest font-mono mb-1.5">
+            {interactions.length > 0 ? `${interactions.length} entries · last 30 days` : 'Last 30 days'}
+          </p>
+          <h1 className="text-h1 text-slate-900">History</h1>
         </div>
-        <Link to="/interactions/new" className="btn-primary">+ Log</Link>
+        <Link to="/interactions/new" className="btn-primary inline-flex items-center gap-2 h-btn-md px-4 text-body-sm font-medium rounded-md">
+          <MessageSquarePlus size={15} strokeWidth={1.75} />
+          Log interaction
+        </Link>
       </div>
 
+      {/* Filter */}
       {!propColleagueId && colleagues.length > 0 && (
         <select
-          className="input py-2 w-full sm:w-52"
+          className="input w-full sm:w-52"
           value={filterColleagueId}
           onChange={e => setFilterColleagueId(e.target.value)}
           aria-label="Filter by colleague"
@@ -61,45 +64,82 @@ export default function InteractionHistory({ colleagueId: propColleagueId, limit
         </select>
       )}
 
-      {interactions.length === 0 ? (
-        <div className="empty-state">
-          <p className="text-3xl mb-4">📝</p>
-          <h3 className="mb-2">No interactions yet</h3>
-          <p className="text-sm text-gray-500 mb-6">
-            {filterColleagueId
-              ? 'No interactions logged for this colleague in the last 30 days.'
-              : 'Start logging your conversations to see them here.'}
-          </p>
-          <Link to="/interactions/new" className="btn-primary">Log your first</Link>
+      {/* Loading */}
+      {loading && (
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-16 skeleton rounded-lg" />
+          ))}
         </div>
-      ) : (
-        <div className="space-y-6">
+      )}
+
+      {/* Empty */}
+      {!loading && interactions.length === 0 && (
+        <EmptyState
+          icon={Clock}
+          title="No interactions yet"
+          description={filterColleagueId
+            ? 'No interactions logged for this colleague in the last 30 days.'
+            : 'Start logging your conversations to see them here.'}
+          action={() => {}}
+          actionLabel="Log your first"
+        />
+      )}
+
+      {/* Timeline */}
+      {!loading && grouped.length > 0 && (
+        <div className="relative pl-10">
+          {/* Vertical line */}
+          <div className="absolute left-2.5 top-2 bottom-2 w-px bg-slate-200" />
+
           {grouped.map(({ label, items }) => (
-            <div key={label}>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{label}</p>
-              <div className="space-y-3">
+            <div key={label} className="mb-7">
+              {/* Date header */}
+              <div className="relative flex items-center gap-3 -ml-10 mb-4">
+                <div className="w-5 h-5 rounded-full bg-white border-2 border-indigo-500 flex items-center justify-center shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                </div>
+                <h2 className="text-body-sm font-semibold text-slate-900" style={{ letterSpacing: '-0.01em' }}>{label}</h2>
+              </div>
+
+              <div className="space-y-2.5">
                 {items.map(i => (
-                  <div key={i.id} className="card group py-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 text-xs text-gray-400 mb-1.5 flex-wrap">
-                          <span className="capitalize font-medium">{i.interaction_type.replace(/_/g, ' ')}</span>
-                          {i.colleagues?.name && <span>· {i.colleagues.name}</span>}
-                          {i.mood_signal && (
-                            <span className="capitalize">· {i.mood_signal}</span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-700 line-clamp-2">{i.raw_content}</p>
+                  <Card key={i.id} padding={false} className="group overflow-hidden">
+                    <div className="flex gap-4 p-4">
+                      <div className="relative shrink-0">
+                        <Avatar name={i.colleagues?.name || '?'} size={36} />
+                        {i.mood_signal && (
+                          <span
+                            className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white"
+                            style={{ background: moodColor(i.mood_signal) }}
+                          />
+                        )}
                       </div>
-                      <button
-                        className="btn-ghost opacity-0 group-hover:opacity-100 focus:opacity-100 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0"
-                        onClick={() => handleDelete(i.id)}
-                        aria-label={`Delete interaction from ${new Date(i.created_at).toLocaleDateString()}`}
-                      >
-                        Delete
-                      </button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-body-sm font-semibold text-slate-900" style={{ letterSpacing: '-0.01em' }}>
+                              {i.colleagues?.name || 'General'}
+                            </span>
+                            <Badge variant="neutral">{i.interaction_type.replace(/_/g, ' ')}</Badge>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-caption font-mono text-slate-400">
+                              {new Date(i.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                            </span>
+                            <button
+                              className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-slate-400 hover:text-danger-600 transition-[opacity,color] duration-fast p-1 rounded"
+                              onClick={() => handleDelete(i.id)}
+                              aria-label="Delete interaction"
+                            >
+                              <Trash2 size={13} strokeWidth={1.75} />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-body-sm text-slate-600 line-clamp-2 leading-relaxed">{i.raw_content}</p>
+                      </div>
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
             </div>
@@ -110,21 +150,22 @@ export default function InteractionHistory({ colleagueId: propColleagueId, limit
   )
 }
 
-function groupByDate(interactions) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const yesterday = new Date(today)
-  yesterday.setDate(today.getDate() - 1)
+function moodColor(mood) {
+  if (mood === 'good' || mood === 'open') return '#10B981'
+  if (mood === 'tough' || mood === 'tense') return '#F59E0B'
+  return '#94A3B8'
+}
 
+function groupByDate(interactions) {
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1)
   const groups = {}
   for (const i of interactions) {
-    const d = new Date(i.created_at)
-    d.setHours(0, 0, 0, 0)
+    const d = new Date(i.created_at); d.setHours(0, 0, 0, 0)
     let label
     if (d.getTime() === today.getTime()) label = 'Today'
     else if (d.getTime() === yesterday.getTime()) label = 'Yesterday'
     else label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
-
     if (!groups[label]) groups[label] = []
     groups[label].push(i)
   }

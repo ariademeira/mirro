@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { Users, MessageSquarePlus, Zap, Clock } from 'lucide-react'
 import { getColleagues } from '../lib/api/colleagues'
 import { getInteractions } from '../lib/api/interactions'
+import { StatCard, Card, Badge, Avatar, Button, EmptyState } from '../components/ui'
 import { freeTierConfig } from '../config'
 
 export default function DashboardHome() {
   const [colleagues, setColleagues] = useState([])
-  const [todayInteractions, setTodayInteractions] = useState([])
   const [recentInteractions, setRecentInteractions] = useState([])
+  const [todayCount, setTodayCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -16,130 +18,136 @@ export default function DashboardHome() {
       getInteractions({ days: 30 }),
     ]).then(([cols, interactions]) => {
       setColleagues(cols)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      setTodayInteractions(interactions.filter(i => new Date(i.created_at) >= today))
+      const today = new Date(); today.setHours(0, 0, 0, 0)
+      setTodayCount(
+        interactions.filter(i =>
+          new Date(i.created_at) >= today &&
+          !['morning_reflection', 'evening_reflection'].includes(i.interaction_type)
+        ).length
+      )
       setRecentInteractions(interactions.slice(0, 5))
     }).catch(console.error).finally(() => setLoading(false))
   }, [])
 
-  const lastInteraction = recentInteractions[0]
+  const isOnboarding = !loading && colleagues.length === 0 && recentInteractions.length === 0
 
   return (
-    <div className="space-y-8">
-      {/* Quick stats */}
-      <section>
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Your progress</h2>
-        <div className="grid grid-cols-3 gap-4">
-          <StatCard
-            loading={loading}
-            value={colleagues.length}
-            max={freeTierConfig.maxColleagues}
-            label="Colleagues"
-            href="/colleagues"
-            color="indigo"
-          />
-          <StatCard
-            loading={loading}
-            value={todayInteractions.filter(i => !['morning_reflection','evening_reflection'].includes(i.interaction_type)).length}
-            label="Logged today"
-            href="/interactions"
-            color="green"
-          />
-          <StatCard
-            loading={loading}
-            value={lastInteraction ? relativeDate(lastInteraction.created_at) : '—'}
-            label="Last interaction"
-            href="/interactions"
-            isText
-            color="blue"
-          />
+    <div className="space-y-6">
+      {/* Page header */}
+      <div className="flex items-end justify-between">
+        <div>
+          <p className="text-micro text-slate-400 uppercase tracking-widest font-mono mb-1.5">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </p>
+          <h1 className="text-h1 text-slate-900">{getGreeting()}</h1>
         </div>
-      </section>
-
-      {/* Quick actions */}
-      <section>
-        <div className="card-flat space-y-4">
-          <h2>Quick actions</h2>
-          <div className="flex flex-wrap gap-3">
-            <Link to="/interactions/new" className="btn-primary">+ Log interaction</Link>
-            <Link to="/colleagues/new" className="btn-secondary">+ Add colleague</Link>
-            <Link to="/interactions" className="btn-ghost">View history</Link>
-          </div>
+        <div className="flex gap-2">
+          <Link to="/interactions" className="btn-secondary">View history</Link>
+          <Link to="/interactions/new" className="btn-primary">
+            <MessageSquarePlus size={15} strokeWidth={1.75} />
+            Log interaction
+          </Link>
         </div>
-      </section>
-
-      {/* Recent interactions */}
-      {!loading && recentInteractions.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2>Recent activity</h2>
-            <Link to="/interactions" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
-              See all →
-            </Link>
-          </div>
-          <div className="space-y-3">
-            {recentInteractions.map(i => (
-              <div key={i.id} className="card py-4">
-                <div className="flex items-center gap-2 text-xs text-gray-400 mb-1 flex-wrap">
-                  <span className="capitalize font-medium">{i.interaction_type.replace(/_/g, ' ')}</span>
-                  {i.colleagues?.name && <span>· {i.colleagues.name}</span>}
-                  <span className="ml-auto">{relativeDate(i.created_at)}</span>
-                </div>
-                <p className="text-sm text-gray-700 line-clamp-2">{i.raw_content}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      </div>
 
       {/* Onboarding empty state */}
-      {!loading && colleagues.length === 0 && recentInteractions.length === 0 && (
-        <div className="empty-state">
-          <p className="text-4xl mb-4">👋</p>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Welcome to Mirro</h3>
-          <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
-            Start by adding the colleagues you work with most.
-          </p>
-          <Link to="/colleagues/new" className="btn-primary">Add your first colleague</Link>
+      {isOnboarding && (
+        <EmptyState
+          icon={Users}
+          title="Welcome to Mirro"
+          description="Start by adding the colleagues you work with most. Mirro will help you see patterns in how those relationships develop."
+          action={() => {}}
+          actionLabel="Add your first colleague"
+        />
+      )}
+
+      {/* Stats grid */}
+      {!isOnboarding && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i}>
+                <div className="skeleton h-7 w-12 mb-3 rounded" />
+                <div className="skeleton h-3 w-20 rounded" />
+              </Card>
+            ))
+          ) : (
+            <>
+              <StatCard label="Colleagues" value={colleagues.length} icon={Users}
+                delta={`of ${freeTierConfig.maxColleagues} max`} deltaTone="flat" />
+              <StatCard label="Logged today" value={todayCount} icon={MessageSquarePlus}
+                delta={todayCount > 0 ? 'great momentum' : 'log your first'} deltaTone={todayCount > 0 ? 'up' : 'flat'} />
+              <StatCard label="This month" value={recentInteractions.length} icon={Clock}
+                delta="last 30 days" deltaTone="flat" />
+              <StatCard label="Streak" value="—" icon={Zap}
+                delta="start logging daily" deltaTone="flat" />
+            </>
+          )}
         </div>
+      )}
+
+      {/* Quick actions row */}
+      {!isOnboarding && !loading && (
+        <div className="flex gap-3 flex-wrap">
+          <Link to="/interactions/new" className="btn-primary">
+            <MessageSquarePlus size={15} strokeWidth={1.75} />
+            Log interaction
+          </Link>
+          <Link to="/colleagues/new" className="btn-secondary">+ Add colleague</Link>
+          <Link to="/colleagues" className="btn-tertiary">View all colleagues</Link>
+        </div>
+      )}
+
+      {/* Recent activity */}
+      {!loading && recentInteractions.length > 0 && (
+        <section>
+          <Card padding={false}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+              <div>
+                <h2 className="text-h3 text-slate-900">Recent interactions</h2>
+                <p className="text-caption text-slate-500 mt-0.5">Last 30 days</p>
+              </div>
+              <Link to="/interactions" className="btn-tertiary text-caption">View all</Link>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {recentInteractions.map(i => (
+                <div key={i.id} className="flex gap-4 px-5 py-3.5">
+                  <Avatar name={i.colleagues?.name || '?'} size={32} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2 mb-1">
+                      <span className="text-body-sm font-semibold text-slate-900" style={{ letterSpacing: '-0.01em' }}>
+                        {i.colleagues?.name || 'General'}
+                      </span>
+                      <span className="text-caption font-mono text-slate-400 shrink-0">{relativeDate(i.created_at)}</span>
+                    </div>
+                    <p className="text-body-sm text-slate-500 line-clamp-2 leading-relaxed">{i.raw_content}</p>
+                    <div className="mt-1.5">
+                      <Badge variant="neutral">{i.interaction_type.replace(/_/g, ' ')}</Badge>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </section>
       )}
     </div>
   )
 }
 
-function StatCard({ loading, value, max, label, href, isText, color }) {
-  const colorMap = {
-    indigo: 'text-indigo-600',
-    green:  'text-green-600',
-    blue:   'text-blue-600',
-  }
-  const valueColor = colorMap[color] || 'text-indigo-600'
-
-  return (
-    <Link
-      to={href}
-      className="card block text-center hover:border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
-    >
-      {loading ? (
-        <div className="h-8 bg-gray-200 rounded animate-pulse mx-auto w-12 mb-2" />
-      ) : (
-        <p className={`font-bold ${valueColor} ${isText ? 'text-sm mt-1' : 'text-3xl'}`}>
-          {value}{max != null ? <span className="text-gray-400 font-normal text-base">/{max}</span> : null}
-        </p>
-      )}
-      <p className="text-xs text-gray-500 mt-1 font-medium">{label}</p>
-    </Link>
-  )
+function getGreeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning.'
+  if (h < 17) return 'Good afternoon.'
+  return 'Good evening.'
 }
 
 function relativeDate(iso) {
   const d = new Date(iso)
   const now = new Date()
-  const diffMs = now - d
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
+  const diffMins = Math.floor((now - d) / 60000)
+  const diffHours = Math.floor(diffMins / 60)
+  const diffDays = Math.floor(diffMins / 1440)
   if (diffMins < 1) return 'just now'
   if (diffMins < 60) return `${diffMins}m ago`
   if (diffHours < 24) return `${diffHours}h ago`
