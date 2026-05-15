@@ -19,6 +19,7 @@ import InsightFeed  from './insights/InsightFeed'
 import ReviewQueue  from './insights/HITL/ReviewQueue'
 
 import UserSettings from './settings/UserSettings'
+import UserProfilePage from './pages/UserProfilePage'
 import PrivacyNotice    from './legal/PrivacyNotice'
 import DisclaimerPage   from './legal/Disclaimer'
 import DataControl      from './legal/DataControl'
@@ -56,6 +57,7 @@ export default function App() {
           <Route path="/insights"         element={<ProtectedLayout><InsightFeed /></ProtectedLayout>} />
           <Route path="/admin/hitl"       element={<ProtectedLayout><ReviewQueue /></ProtectedLayout>} />
 
+          <Route path="/profile"          element={<ProtectedLayout><UserProfilePage /></ProtectedLayout>} />
           <Route path="/settings"         element={<ProtectedLayout><UserSettings /></ProtectedLayout>} />
           <Route path="/settings/upgrade" element={<ProtectedLayout><UpgradePlaceholder /></ProtectedLayout>} />
           <Route path="/data-control"     element={<ProtectedLayout><DataControl /></ProtectedLayout>} />

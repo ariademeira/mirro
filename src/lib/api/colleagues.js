@@ -20,7 +20,7 @@ export async function getColleague(id) {
   return data
 }
 
-export async function createColleague({ name, role, department }) {
+export async function createColleague({ name, role, department, title, email, phone, company, notes, photo_url }) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const gate = await checkFreeTierLimit(user.id, 'maxColleagues')
@@ -28,11 +28,32 @@ export async function createColleague({ name, role, department }) {
 
   const { data, error } = await supabase
     .from('colleagues')
-    .insert({ name, role: role || null, department: department || null })
+    .insert({
+      name,
+      role: role || null,
+      department: department || null,
+      title: title || null,
+      email: email || null,
+      phone: phone || null,
+      company: company || null,
+      notes: notes || null,
+      photo_url: photo_url || null,
+    })
     .select()
     .single()
   if (error) throw error
   return { data }
+}
+
+export async function uploadColleaguePhoto(colleagueId, file) {
+  const ext = file.name.split('.').pop()
+  const path = `colleague-photos/${colleagueId}-${Date.now()}.${ext}`
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(path, file, { upsert: true })
+  if (uploadError) throw uploadError
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+  return data.publicUrl
 }
 
 export async function updateColleague(id, updates) {

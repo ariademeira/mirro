@@ -12,7 +12,8 @@ export default function UserSettings() {
       <div className="card space-y-3">
         <h2 className="text-base">Account</h2>
         <p className="text-sm text-gray-600">{user?.email}</p>
-        <div className="flex gap-3 pt-1">
+        <div className="flex gap-3 pt-1 flex-wrap">
+          <Link to="/profile" className="btn-secondary text-sm">Edit profile</Link>
           <Link to="/settings/upgrade" className="btn-secondary text-sm">Upgrade to Premium</Link>
           <button className="btn-ghost text-sm text-red-600 hover:bg-red-50" onClick={signOut}>Sign out</button>
         </div>

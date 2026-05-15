@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageSquarePlus, Trash2, Clock } from 'lucide-react'
+import { MessageSquarePlus, Trash2, Clock, ChevronDown } from 'lucide-react'
 import { getInteractions, deleteInteraction } from '../lib/api/interactions'
 import { getColleagues } from '../lib/api/colleagues'
 import { Avatar, Badge, Button, EmptyState, Card } from '../components/ui'
+
+const TONE_BADGE = {
+  positive:      'bg-green-50 text-green-700',
+  collaborative: 'bg-blue-50 text-blue-700',
+  neutral:       'bg-slate-100 text-slate-500',
+  tense:         'bg-amber-50 text-amber-700',
+  difficult:     'bg-red-50 text-red-700',
+}
 
 export default function InteractionHistory({ colleagueId: propColleagueId, limit = 50 }) {
   const [interactions, setInteractions] = useState([])
@@ -29,6 +37,15 @@ export default function InteractionHistory({ colleagueId: propColleagueId, limit
     if (!confirm('Delete this interaction? This cannot be undone.')) return
     await deleteInteraction(id)
     setInteractions(prev => prev.filter(i => i.id !== id))
+  }
+
+  const [expanded, setExpanded] = useState(new Set())
+  function toggleExpand(id) {
+    setExpanded(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
   }
 
   const grouped = groupByDate(interactions)
@@ -117,11 +134,16 @@ export default function InteractionHistory({ colleagueId: propColleagueId, limit
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline justify-between gap-2 mb-1.5">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-body-sm font-semibold text-slate-900" style={{ letterSpacing: '-0.01em' }}>
                               {i.colleagues?.name || 'General'}
                             </span>
                             <Badge variant="neutral">{i.interaction_type.replace(/_/g, ' ')}</Badge>
+                            {i.tone && i.tone !== 'neutral' && (
+                              <span className={`text-caption px-1.5 py-0.5 rounded font-medium ${TONE_BADGE[i.tone] || TONE_BADGE.neutral}`}>
+                                {i.tone}
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="text-caption font-mono text-slate-400">
@@ -136,7 +158,25 @@ export default function InteractionHistory({ colleagueId: propColleagueId, limit
                             </button>
                           </div>
                         </div>
-                        <p className="text-body-sm text-slate-600 line-clamp-2 leading-relaxed">{i.raw_content}</p>
+                        <p className={`text-body-sm text-slate-600 leading-relaxed ${expanded.has(i.id) ? '' : 'line-clamp-2'}`}>
+                          {i.raw_content}
+                        </p>
+                        {i.raw_content?.length > 120 && (
+                          <button
+                            type="button"
+                            onClick={() => toggleExpand(i.id)}
+                            className="mt-1 text-caption text-indigo-500 hover:text-indigo-700 flex items-center gap-0.5"
+                          >
+                            <ChevronDown size={12} className={`transition-transform duration-fast ${expanded.has(i.id) ? 'rotate-180' : ''}`} />
+                            {expanded.has(i.id) ? 'Show less' : 'Show more'}
+                          </button>
+                        )}
+                        {expanded.has(i.id) && i.internal_comments && (
+                          <div className="mt-2 pt-2 border-t border-slate-100">
+                            <p className="text-caption text-slate-400 mb-0.5">Private notes</p>
+                            <p className="text-body-sm text-slate-500 leading-relaxed">{i.internal_comments}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </Card>

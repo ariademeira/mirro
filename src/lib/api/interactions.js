@@ -20,7 +20,7 @@ export async function getInteractions({ colleagueId, days } = {}) {
   return data
 }
 
-export async function logInteraction({ colleagueId, interactionType, rawContent, source = 'paste', moodSignal }) {
+export async function logInteraction({ colleagueId, interactionType, rawContent, source = 'paste', moodSignal, mood, tone, internalComments }) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const gate = await checkFreeTierLimit(user.id, 'maxInteractionsPerDay')
@@ -37,7 +37,9 @@ export async function logInteraction({ colleagueId, interactionType, rawContent,
       source,
       raw_content: rawContent,
       parsed_signals: parsedSignals,
-      mood_signal: moodSignal || null,
+      mood_signal: moodSignal || mood || null,
+      tone: tone || null,
+      internal_comments: internalComments || null,
     })
     .select()
     .single()
